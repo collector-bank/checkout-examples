@@ -4,6 +4,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading.Tasks;
 using Checkout.Examples.Authorization.Models;
 using Newtonsoft.Json;
 
@@ -18,7 +19,7 @@ namespace Checkout.Examples.Authorization
         private const string API_KEY = "your-api-key";
         private const string BASE_URL = "https://checkout-api-uat.collector.se";
 
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
             Console.WriteLine("Creates a SharedKey used to communicate with Collector Checkout");
 
@@ -31,27 +32,35 @@ namespace Checkout.Examples.Authorization
             var initCheckoutRequest = CreateInitCheckoutRequest(countryCode, storeId);
             
             var httpRequestMessage = CreateHttpRequestMessage("/checkout", initCheckoutRequest);
+            var requestBody = await httpRequestMessage.Content.ReadAsStringAsync();
 
-            Console.WriteLine("-- Authorization header --");
+            Console.WriteLine("-- authorization header:");
             Console.WriteLine(httpRequestMessage.Headers.Authorization);
 
-            Console.WriteLine("-- Request body --");
-            Console.WriteLine(httpRequestMessage.Content.ReadAsStringAsync().Result);
+            Console.WriteLine("-- request body:");
+            Console.WriteLine(requestBody);
 
-            Console.WriteLine("-- Press any key to make real request --");
+            Console.WriteLine();
+            Console.WriteLine("[press any key to make real request]");
+            Console.WriteLine();
+
             Console.ReadLine();
 
-            PerformHttpRequest(httpRequestMessage);
+            await PerformHttpRequest(httpRequestMessage);
         }
 
-        private static void PerformHttpRequest(HttpRequestMessage httpRequestMessage)
+        private static async Task PerformHttpRequest(HttpRequestMessage httpRequestMessage)
         {
             var httpClient = new HttpClient {BaseAddress = new Uri(BASE_URL)};
 
             var response = httpClient.SendAsync(httpRequestMessage).Result;
+            var responseBody = await response.Content.ReadAsStringAsync();
 
-            Console.WriteLine($"response.StatusCode: {response.StatusCode}");
-            Console.WriteLine($"response.Body: {response.Content.ReadAsStringAsync().Result}");
+            Console.WriteLine("-- response http status code:");
+            Console.WriteLine(response.StatusCode);
+
+            Console.WriteLine("-- response body:");
+            Console.WriteLine(responseBody);
         }
 
         private static InitCheckoutRequest CreateInitCheckoutRequest(string countryCode, int storeId)
